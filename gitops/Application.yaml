@@ -1,0 +1,31 @@
+---
+apiVersion: xl-deploy/v1
+kind: Applications
+spec:
+- directory: Applications/AnsibleDemo
+  children:
+  - name: java-server-application
+    type: udm.Application
+    lastVersion: 1.0.0
+    children:
+    - name: 1.0.0
+      type: udm.DeploymentPackage
+      deployables:
+      - name: tomcat
+        type: ansible.RolesSpec
+        fileEncodings:
+          ".+\\.properties": ISO-8859-1
+        roles:
+        - tomcat
+        variables:
+          ui_manager_pass: MyStrongPassword
+          ui_admin_pass: MyStrongPassword
+          ui_admin_username: admin
+          tomcat_ver: 9.0.30
+          ui_manager_user: admin
+        includeDevOpsAsCodeTask: "True"
+        devopsAsCodeTemplates:
+        - name: xldeploy.yaml.j2
+          type: devopsAsCode.TemplateFile
+          file: !file "artifacts/Applications/AnsibleDemo/java-server-application/1.0.0/tomcat/xldeploy.yaml.j2/xldeploy.yaml.j2"
+        file: !file "artifacts/Applications/AnsibleDemo/java-server-application/1.0.0/tomcat/roles.zip"

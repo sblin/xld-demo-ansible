@@ -1,0 +1,13 @@
+---
+apiVersion: xl-deploy/v1
+kind: Environments
+spec:
+- directory: Environments/AnsibleDemo
+  children:
+  - directory: Local
+    children:
+    - name: AnsibleLocal
+      type: udm.Environment
+      members:
+      - Infrastructure/AnsibleDemo/Local/TargetMachine2
+      - Infrastructure/AnsibleDemo/Local/TargetMachine1

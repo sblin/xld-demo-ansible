@@ -1,0 +1,57 @@
+
+Vagrant.configure("2") do |config|
+  
+  config.vm.box = "hashicorp/bionic64"
+  config.vm.provider "virtualbox" do |vb|
+    vb.memory = "512"
+  end
+
+  # Ansible controller machine
+  config.vm.define "ansiblecontroller" do |app|
+    app.vm.provider "virtualbox" do |vb|
+      vb.name = "Ansible controller machine"
+    end
+    app.vm.provision "shell", inline: <<-SHELL
+      sudo apt-get update
+      sudo apt-get install software-properties-common
+      echo "\n----- Installing Ansible ------\n"
+      sudo apt-add-repository --yes --update ppa:ansible/ansible
+      sudo apt-get install ansible --yes
+    SHELL
+    app.vm.network "private_network", ip: "192.168.78.3"
+    app.ssh.insert_key = false
+    app.ssh.private_key_path = ["./key1_rsa", "~/.vagrant.d/insecure_private_key"]
+    app.vm.provision "file", source: "./key1_rsa.pub", destination: "~/.ssh/authorized_keys"
+  end
+
+  # Ansible target machine 1
+  config.vm.define "ansibletargetmachine1" do |app|
+    app.vm.provider "virtualbox" do |vb|
+      vb.name = "Ansible target machine 1"
+    end
+    app.vm.provision "shell", inline: <<-SHELL
+      sudo apt-get update
+      sudo apt-get install python-apt
+    SHELL
+    app.vm.network "private_network", ip: "192.168.78.4"
+    app.ssh.insert_key = false
+    app.ssh.private_key_path = ["./key2_rsa", "~/.vagrant.d/insecure_private_key"]
+    app.vm.provision "file", source: "./key2_rsa.pub", destination: "~/.ssh/authorized_keys"
+  end
+
+  # Ansible target machine 2
+  config.vm.define "ansibletargetmachine2" do |app|
+    app.vm.provider "virtualbox" do |vb|
+      vb.name = "Ansible target machine 2"
+    end
+    app.vm.provision "shell", inline: <<-SHELL
+      sudo apt-get update
+      sudo apt-get install python-apt
+    SHELL
+    app.vm.network "private_network", ip: "192.168.78.5"
+    app.ssh.insert_key = false
+    app.ssh.private_key_path = ["./key3_rsa", "~/.vagrant.d/insecure_private_key"]
+    app.vm.provision "file", source: "./key3_rsa.pub", destination: "~/.ssh/authorized_keys"
+  end
+
+end

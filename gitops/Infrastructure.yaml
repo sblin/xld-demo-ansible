@@ -1,0 +1,37 @@
+---
+apiVersion: xl-deploy/v1
+kind: Infrastructure
+spec:
+- directory: Infrastructure/AnsibleDemo
+  children:
+  - directory: Local
+    children:
+    - name: TargetMachine1
+      type: overthere.SshHost
+      ansibleController: Infrastructure/AnsibleDemo/Local/AnsibleControllerMachine/AnsibleController
+      os: UNIX
+      temporaryDirectoryPath: /tmp
+      address: 192.168.78.4
+      username: vagrant
+      privateKeyFile: /Users/sblin/Documents/github/sblin/xld-demo-ansible/machines/key2_rsa
+      sudoUsername: vagrant
+    - name: TargetMachine2
+      type: overthere.SshHost
+      ansibleController: Infrastructure/AnsibleDemo/Local/AnsibleControllerMachine/AnsibleController
+      os: UNIX
+      address: 192.168.78.5
+      username: vagrant
+      privateKeyFile: /Users/sblin/Documents/github/sblin/xld-demo-ansible/machines/key3_rsa
+    - name: AnsibleControllerMachine
+      type: overthere.SshHost
+      os: UNIX
+      address: 192.168.78.3
+      username: vagrant
+      privateKeyFile: /Users/sblin/Documents/github/sblin/xld-demo-ansible/machines/key1_rsa
+      children:
+      - name: AnsibleController
+        type: ansible.Controller
+        ansiblePath: /usr/bin/ansible
+        ansiblePlaybookPath: /usr/bin/ansible-playbook
+        ansiblePythonInterpreter: /usr/bin/python
+        devopsAsCodeUrl: http://localhost:4516

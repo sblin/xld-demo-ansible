@@ -1,0 +1,7 @@
+apiVersion: xl/v1
+kind: Import
+metadata:
+ imports:
+   - Application.yaml
+   - Infrastructure.yaml
+   - Environment.yaml
