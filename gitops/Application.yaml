@@ -4,28 +4,164 @@ kind: Applications
 spec:
 - directory: Applications/AnsibleDemo
   children:
-  - name: java-server-application
-    type: udm.Application
-    lastVersion: 1.0.0
+  - directory: AWS
     children:
-    - name: 1.0.0
-      type: udm.DeploymentPackage
-      deployables:
-      - name: tomcat
-        type: ansible.RolesSpec
-        fileEncodings:
-          ".+\\.properties": ISO-8859-1
-        roles:
-        - tomcat
-        variables:
-          ui_manager_pass: MyStrongPassword
-          ui_admin_pass: MyStrongPassword
-          ui_admin_username: admin
-          tomcat_ver: 9.0.30
-          ui_manager_user: admin
-        includeDevOpsAsCodeTask: "True"
-        devopsAsCodeTemplates:
-        - name: xldeploy.yaml.j2
-          type: devopsAsCode.TemplateFile
-          file: !file "artifacts/Applications/AnsibleDemo/java-server-application/1.0.0/tomcat/xldeploy.yaml.j2/xldeploy.yaml.j2"
-        file: !file "artifacts/Applications/AnsibleDemo/java-server-application/1.0.0/tomcat/roles.zip"
+    - name: tomcat-server
+      type: udm.Application
+      lastVersion: 1.0.0
+      children:
+      - name: 1.0.0
+        type: udm.DeploymentPackage
+        orchestrator:
+        - parallel-by-container
+        deployables:
+        - name: tomcat-role
+          type: ansible.RolesSpec
+          tags:
+          - app_server
+          fileEncodings:
+            ".+\\.properties": ISO-8859-1
+          roles:
+          - tomcat
+          variables:
+            ui_admin_pass: "{{ui_admin_pass}}"
+            ui_manager_user: "{{ui_manager_user}}"
+            tomcat_ver: "{{tomcat_version}}"
+            ui_manager_pass: "{{ui_manager_pass}}"
+            ui_admin_username: "{{ui_admin_username}}"
+          includeDevOpsAsCodeTask: "true"
+          file: !file "artifacts/Applications/AnsibleDemo/AWS/tomcat-server/1.0.0/tomcat-role/roles_tomcat.zip"
+    - name: aws-host
+      type: udm.Application
+      lastVersion: 1.0.0
+      children:
+      - name: 1.0.0
+        type: udm.DeploymentPackage
+        deployables:
+        - name: tomcat-keypair
+          type: aws.ec2.KeyPairSpec
+          keyPairName: my-app-keypair
+          region: "{{aws_region}}"
+          pemFilePath: "{{key_pair_path_tomcat}}"
+        - name: tomcat-securitygroup
+          type: aws.vpc.SecurityGroupSpec
+          securityGroupName: tomcat-security-group
+          description: tomcat-security (HTTP/SSH)
+          region: "{{aws_region}}"
+          inboundRules:
+          - name: http
+            type: aws.vpc.SecurityGroupInboundRuleSpec
+            protocol: TCP
+            portRange: "8080"
+            source: 0.0.0.0/0
+          - name: ssh
+            type: aws.vpc.SecurityGroupInboundRuleSpec
+            protocol: TCP
+            portRange: "22"
+            source: 0.0.0.0/0
+        - name: tomcat-host
+          type: aws.ec2.InstanceSpec
+          boundTemplates:
+          - Applications/AnsibleDemo/AWS/aws-host/1.0.0/sshost-template
+          instanceName: tomcat-host
+          amiId: "{{aws_ami}}"
+          region: "{{aws_region}}"
+          securityGroup:
+          - tomcat-security-group
+          instanceType: "{{aws_instance_type}}"
+          keyName: my-app-keypair
+        templates:
+        - name: sshost-template
+          type: template.overthere.SshHost
+          instanceName: AnsibleDemo/AWS/TomcatHost
+          tags:
+          - app_server
+          os: UNIX
+          connectionType: SUDO
+          address: "{{%publicHostname%}}"
+          username: ubuntu
+          privateKeyFile: "{{key_pair_path_tomcat}}"
+          sudoUsername: root
+    - name: ansible-controller
+      type: udm.Application
+      lastVersion: 1.0.0
+      children:
+      - name: 1.0.0
+        type: udm.ProvisioningPackage
+        deployables:
+        - name: Ansible-Instance
+          type: aws.ec2.InstanceSpec
+          boundTemplates:
+          - Applications/AnsibleDemo/AWS/ansible-controller/1.0.0/AnsibleControllerMachineTemplate
+          provisioners:
+          - name: AnsibleSetupScript
+            type: script.provisioner.Script
+            hostTemplate: Applications/AnsibleDemo/AWS/ansible-controller/1.0.0/AnsibleControllerMachineTemplate
+            file: !file "artifacts/Applications/AnsibleDemo/AWS/ansible-controller/1.0.0/Ansible-Instance/AnsibleSetupScript/provision_ansible.sh"
+          instanceName: ansible-controller-instance
+          amiId: "{{aws_ami}}"
+          region: "{{aws_region}}"
+          securityGroup:
+          - Name:ansible-controller-sg
+          instanceType: "{{aws_instance_type}}"
+          keyName: ansible-keypair
+        - name: AnsibleEC2KeyPair
+          type: aws.ec2.KeyPairSpec
+          keyPairName: ansible-keypair
+          region: "{{aws_region}}"
+          pemFilePath: "{{key_pair_path}}"
+        - name: AnsibleController-securitygroup
+          type: aws.vpc.SecurityGroupSpec
+          securityGroupName: ansible-controller-sg
+          description: ssh-security (HTTP/SSH)
+          region: eu-west-3
+          inboundRules:
+          - name: InboundRule-SSH
+            type: aws.vpc.SecurityGroupInboundRuleSpec
+            protocol: TCP
+            portRange: "22"
+            source: 0.0.0.0/0
+        templates:
+        - name: AnsibleControllerMachineTemplate
+          type: template.overthere.SshHost
+          instanceName: AnsibleDemo/AWS/AnsibleHost
+          childTemplates:
+          - name: defaultAnsibleController
+            type: template.ansible.Controller
+            ansiblePath: /usr/bin/ansible
+            ansiblePlaybookPath: /usr/bin/ansible-playbook
+            ansibleGalaxyPath: /usr/bin/ansible-galaxy
+            devopsAsCodeUrl: http://localhost:4516
+          os: UNIX
+          connectionType: SUDO
+          address: "{{%publicHostname%}}"
+          username: ubuntu
+          privateKeyFile: "{{key_pair_path}}"
+          sudoUsername: root
+  - directory: Local
+    children:
+    - name: tomcat
+      type: udm.Application
+      lastVersion: 1.0.0
+      children:
+      - name: 1.0.0
+        type: udm.DeploymentPackage
+        deployables:
+        - name: tomcatRole
+          type: ansible.RolesSpec
+          fileEncodings:
+            ".+\\.properties": ISO-8859-1
+          roles:
+          - tomcat
+          variables:
+            ui_admin_pass: "{{ui_admin_pass}}"
+            ui_manager_user: "{{ui_manager_user}}"
+            tomcat_ver: "{{tomcat_version}}"
+            ui_manager_pass: "{{ui_manager_pass}}"
+            ui_admin_username: "{{ui_admin_username}}"
+          includeDevOpsAsCodeTask: "True"
+          devopsAsCodeTemplates:
+          - name: xldeploy.yaml.j2
+            type: devopsAsCode.TemplateFile
+            file: !file "artifacts/Applications/AnsibleDemo/Local/tomcat/1.0.0/tomcatRole/xldeploy.yaml.j2/xldeploy.yaml.j2"
+          file: !file "artifacts/Applications/AnsibleDemo/Local/tomcat/1.0.0/tomcatRole/roles.zip"

@@ -15,6 +15,18 @@ spec:
       username: vagrant
       privateKeyFile: /Users/sblin/Documents/github/sblin/xld-demo-ansible/machines/key2_rsa
       sudoUsername: vagrant
+      children:
+      - name: tomcat-server
+        type: tomcat.Server
+        home: /usr/share/tomcat
+        startCommand: sudo systemctl start tomcat
+        stopCommand: sudo systemctl stop tomcat
+        statusCommand: sudo systemctl status tomcat
+        startWaitTime: 1
+        stopWaitTime: 1
+        children:
+        - name: tomcat.vh
+          type: tomcat.VirtualHost
     - name: TargetMachine2
       type: overthere.SshHost
       ansibleController: Infrastructure/AnsibleDemo/Local/AnsibleControllerMachine/AnsibleController
@@ -22,6 +34,18 @@ spec:
       address: 192.168.78.5
       username: vagrant
       privateKeyFile: /Users/sblin/Documents/github/sblin/xld-demo-ansible/machines/key3_rsa
+      children:
+      - name: tomcat-server
+        type: tomcat.Server
+        home: /usr/share/tomcat
+        startCommand: sudo systemctl start tomcat
+        stopCommand: sudo systemctl stop tomcat
+        statusCommand: sudo systemctl status tomcat
+        startWaitTime: 1
+        stopWaitTime: 1
+        children:
+        - name: tomcat.vh
+          type: tomcat.VirtualHost
     - name: AnsibleControllerMachine
       type: overthere.SshHost
       os: UNIX
@@ -35,3 +59,9 @@ spec:
         ansiblePlaybookPath: /usr/bin/ansible-playbook
         ansiblePythonInterpreter: /usr/bin/python
         devopsAsCodeUrl: http://localhost:4516
+  - directory: AWS
+    children:
+    - name: awsCloud
+      type: aws.Cloud
+      accesskey: MY_ACCESS_KEY_TO_CHANGE
+      accessSecret: MY_ACCESS_SECRET_TO_CHANGE

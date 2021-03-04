@@ -4,10 +4,42 @@ kind: Environments
 spec:
 - directory: Environments/AnsibleDemo
   children:
+  - directory: AWS
+    children:
+    - name: AnsibleAWSConfig
+      type: udm.Dictionary
+      entries:
+        key_pair_path: /tmp/key_pair.pem
+        aws_region: eu-west-3
+        aws_ami: ami-00f6fe7d6cbb56a78
+        aws_instance_type: t2.micro
+        key_pair_path_tomcat: /tmp/key_pair_tomcat.pem
+    - name: AnsibleAWS
+      type: udm.Environment
+      members:
+      - Infrastructure/AnsibleDemo/AWS/awsCloud
+      dictionaries:
+      - Environments/AnsibleDemo/AWS/AnsibleAWSConfig
+      - Environments/AnsibleDemo/AnsibleSharedConfig
+  - name: AnsibleSharedConfig
+    type: udm.Dictionary
+    entries:
+      ui_admin_username: admin
+      tomcat_version: 9.0.30
+      ui_manager_user: admin
+    encryptedEntries:
+      ui_admin_pass: MyStrongPassword
+      ui_manager_pass: MyStrongPassword
   - directory: Local
     children:
     - name: AnsibleLocal
       type: udm.Environment
       members:
+      - Infrastructure/AnsibleDemo/Local/TargetMachine2/tomcat-server
       - Infrastructure/AnsibleDemo/Local/TargetMachine2
+      - Infrastructure/AnsibleDemo/Local/TargetMachine2/tomcat-server/tomcat.vh
+      - Infrastructure/AnsibleDemo/Local/TargetMachine1/tomcat-server/tomcat.vh
+      - Infrastructure/AnsibleDemo/Local/TargetMachine1/tomcat-server
       - Infrastructure/AnsibleDemo/Local/TargetMachine1
+      dictionaries:
+      - Environments/AnsibleDemo/AnsibleSharedConfig
