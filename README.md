@@ -1,7 +1,7 @@
 # **Digital.ai Deploy demo with Ansible**
 
 
-This a demo setup to demonstrate two simple uses cases of using Ansible with Digital.ai Deploy.
+This is a demo setup to demonstrate two simple uses cases of using Ansible with Digital.ai Deploy.
 
 There are two demonstrations:
 1. Demo Local demonstrates how to use an existing Ansible machine (the Ansible Controller) to configure a Tomcat server on two existing machines (the Target Machines)
@@ -11,6 +11,11 @@ There are two demonstrations:
 - deployment 2 creates a new AWS instance (the Taget machine)
 - deployment 3 installs Tomcat on the Target machine using the Ansible Controller
 - deployment 4 deploys the petClinic-war application on tomcat
+
+---
+## Initial Step
+### Import the artifacts/AnsibleDemo.yml file in Deploy using the xl cli.
+
 ---
 
 ## Demo local 
