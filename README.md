@@ -14,6 +14,8 @@ There are two demonstrations:
 
 ---
 ## Initial Step
+### Install the Ansible Step Plugin
+https://github.com/xebialabs-community/xld-ansible-step-plugin
 ### Import the artifacts/AnsibleDemo.yml file in Deploy using the xl cli.
 
 ---
